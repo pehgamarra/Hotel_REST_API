@@ -3,12 +3,20 @@ from flask_restful import Api
 from resources.hotel import Hotels, Hotel
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///databank.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 api = Api(app)
+
+@app.before_request
+def bankcreate():
+    databank.create_all()
 
 api.add_resource(Hotels, '/hotels')
 api.add_resource(Hotel, '/hotels/<string:hotel_id>')
 
 if __name__ == '__main__':
+    from sql_alchemy import databank
+    databank.init_app(app)
     app.run(debug=True)
 
-# run into http://127.0.0.1:5000/hotelsx
+# run into http://127.0.0.1:5000/hotels on postman
