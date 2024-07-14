@@ -1,37 +1,53 @@
 from flask_restful import Resource, reqparse
 from models.hotel import HotelModel
 from flask_jwt_extended import jwt_required
+import sqlite3
 
-hotels = [
-    {
-        'hotel_id' : 'alpha',
-        'name': 'Alpha Hotel',
-        'star' : 4.3,
-        'daily' : 420.34,
-        'city' : 'Rio de Janeiro'
-    }, 
-    {
-        'hotel_id' : 'bravo',
-        'name': 'Bravo Hotel',
-        'star' : 4.4,
-        'daily' : 380.90,
-        'city' : 'Las Vegas'
-    }, 
-    {
-        'hotel_id' : 'charlie',
-        'name': 'Charlie Hotel',
-        'star' : 3.9,
-        'daily' : 320.20,
-        'city' : 'Miami'
-    }, 
-]
+
+def normalize_path_params(city = None,
+                          star_min = 0,
+                          star_max = 5,
+                          daily_min = 0,
+                          daily_max = 10000,
+                          limit = 0,
+                          offset = 0, **data) :
+    if city:
+        return {
+            'star_min':star_min,
+            'star_max':star_max,
+            'daily_min':daily_min,
+            'daily_max':daily_max,
+            'city' : city,
+            'limit':limit,
+            'offset':offset}
+    return {
+            'star_min':star_min,
+            'star_max':star_max,
+            'daily_min':daily_min,
+            'daily_max':daily_max,
+            'limit':limit,
+            'offset':offset
+            }
+
+
+path_params = reqparse.RequestParser()
+path_params.add_argument('city', type=str)
+path_params.add_argument('star_min', type=float)
+path_params.add_argument('star_max', type=float)
+path_params.add_argument('daily_min', type=float)
+path_params.add_argument('daily_max', type=float)
+path_params.add_argument('limit', type=float)
+path_params.add_argument('offset', type=float)
+
 
 class Hotels(Resource):
 
     def get(self):
+
+        data = path_params.parse_args()
+        valid_data ={key:data[key] for keys in data if data[key] is not None}
         return {'hotels' : [hotel.json() for hotel in HotelModel.query.all()]}
     
-
 
 class Hotel(Resource):
     args = reqparse.RequestParser()
