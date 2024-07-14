@@ -4,49 +4,75 @@ from flask_jwt_extended import jwt_required
 import sqlite3
 
 
-def normalize_path_params(city = None,
-                          star_min = 0,
-                          star_max = 5,
-                          daily_min = 0,
-                          daily_max = 10000,
-                          limit = 0,
-                          offset = 0, **data) :
+def normalize_path_params(city=None, star_min=0, star_max=5, daily_min=0, daily_max=10000, limit=50, offset=0, **data):
     if city:
         return {
-            'star_min':star_min,
-            'star_max':star_max,
-            'daily_min':daily_min,
-            'daily_max':daily_max,
-            'city' : city,
-            'limit':limit,
-            'offset':offset}
+            'star_min': star_min,
+            'star_max': star_max,
+            'daily_min': daily_min,
+            'daily_max': daily_max,
+            'city': city,
+            'limit': limit,
+            'offset': offset
+        }
     return {
-            'star_min':star_min,
-            'star_max':star_max,
-            'daily_min':daily_min,
-            'daily_max':daily_max,
-            'limit':limit,
-            'offset':offset
-            }
+        'star_min': star_min,
+        'star_max': star_max,
+        'daily_min': daily_min,
+        'daily_max': daily_max,
+        'limit': limit,
+        'offset': offset
+    }
 
 
 path_params = reqparse.RequestParser()
-path_params.add_argument('city', type=str)
-path_params.add_argument('star_min', type=float)
-path_params.add_argument('star_max', type=float)
-path_params.add_argument('daily_min', type=float)
-path_params.add_argument('daily_max', type=float)
-path_params.add_argument('limit', type=float)
-path_params.add_argument('offset', type=float)
+path_params.add_argument('city', type=str, location='args')
+path_params.add_argument('star_min', type=float, location='args')
+path_params.add_argument('star_max', type=float, location='args')
+path_params.add_argument('daily_min', type=float, location='args')
+path_params.add_argument('daily_max', type=float, location='args')
+path_params.add_argument('limit', type=int, location='args')
+path_params.add_argument('offset', type=int, location='args')
 
 
 class Hotels(Resource):
 
     def get(self):
+        connection = sqlite3.connect('instance/databank.db')
+        cursor = connection.cursor()
 
         data = path_params.parse_args()
-        valid_data ={key:data[key] for keys in data if data[key] is not None}
-        return {'hotels' : [hotel.json() for hotel in HotelModel.query.all()]}
+        valid_data = {key:data[key] for key in data if data[key] is not None}
+        parameters = normalize_path_params(**valid_data)
+
+        if not parameters.get('city'):
+            search = "SELECT * FROM hotels \
+            WHERE (star >= ? and star <= ?) \
+            and (daily >= ? and daily <= ?) \
+            LIMIT ? OFFSET ?"
+            tupla = tuple([parameters[key] for key in parameters])
+            result = cursor.execute(search, tupla)
+        else :
+            search = "SELECT * FROM hotels \
+            WHERE (star >= ? and star <= ?) \
+            and (daily >= ? and daily <= ?) \
+            and city = ? LIMIT ? OFFSET ?"
+            tupla = tuple([parameters[key] for key in parameters])
+            result = cursor.execute(search, tupla)
+
+        hotels = []
+        for line in result:
+            hotels.append({
+            'hotel_id' : line[0],
+            'name' : line[1],
+            'star' : line[2],
+            'daily' : line[3],
+            'city' : line[4]
+            })
+        
+        connection.close
+        print(data)
+        return {'hotels' : hotels}
     
 
 class Hotel(Resource):
