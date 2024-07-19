@@ -21,11 +21,11 @@ The site is compost of:
 
 The user generates a JWT token to enable posting, updating, and deleting operations on the sites and hotels.
 
-So you need do login, take the token and put it on the Headers > Authorization{key} / Bearer(token) {value} when you will post, put or del ! (the gets are free to use)
+So you need do login, take the token and put it on the Headers > Authorization{key} / Bearer(token) {value} when you will post, put or del !
+*((the gets dont need a login to use SO you dont need be registrated in the site to see the hotels and they details))*
 
 
-The main url is : http://127.0.0.1:5000/
-followed by what u need to access:
+The main url is : http://127.0.0.1:5000/ (followed by what u need to access):
 (Hotels, '/hotels')
 (Hotel, '/hotels/<string:hotel_id>')
 (User, '/users/<int:user_id>')
