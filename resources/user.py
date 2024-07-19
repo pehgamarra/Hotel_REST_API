@@ -33,7 +33,7 @@ class User(Resource):
 
 
 class UserRegister(Resource):
-    # /registration
+    # /registration/
     
     def post(self):
         data = args.parse_args()

@@ -1,28 +1,9 @@
 from flask_restful import Resource, reqparse
 from models.hotel import HotelModel
+from models.site import SiteModel
+from resources.filters import not_city_search, with_city_search, normalize_path_params
 from flask_jwt_extended import jwt_required
 import sqlite3
-
-
-def normalize_path_params(city=None, star_min=0, star_max=5, daily_min=0, daily_max=10000, limit=50, offset=0, **data):
-    if city:
-        return {
-            'star_min': star_min,
-            'star_max': star_max,
-            'daily_min': daily_min,
-            'daily_max': daily_max,
-            'city': city,
-            'limit': limit,
-            'offset': offset
-        }
-    return {
-        'star_min': star_min,
-        'star_max': star_max,
-        'daily_min': daily_min,
-        'daily_max': daily_max,
-        'limit': limit,
-        'offset': offset
-    }
 
 
 path_params = reqparse.RequestParser()
@@ -33,6 +14,7 @@ path_params.add_argument('daily_min', type=float, location='args')
 path_params.add_argument('daily_max', type=float, location='args')
 path_params.add_argument('limit', type=int, location='args')
 path_params.add_argument('offset', type=int, location='args')
+
 
 
 class Hotels(Resource):
@@ -46,19 +28,11 @@ class Hotels(Resource):
         parameters = normalize_path_params(**valid_data)
 
         if not parameters.get('city'):
-            search = "SELECT * FROM hotels \
-            WHERE (star >= ? and star <= ?) \
-            and (daily >= ? and daily <= ?) \
-            LIMIT ? OFFSET ?"
             tupla = tuple([parameters[key] for key in parameters])
-            result = cursor.execute(search, tupla)
+            result = cursor.execute(not_city_search, tupla)
         else :
-            search = "SELECT * FROM hotels \
-            WHERE (star >= ? and star <= ?) \
-            and (daily >= ? and daily <= ?) \
-            and city = ? LIMIT ? OFFSET ?"
             tupla = tuple([parameters[key] for key in parameters])
-            result = cursor.execute(search, tupla)
+            result = cursor.execute(with_city_search, tupla)
 
         hotels = []
         for line in result:
@@ -67,7 +41,8 @@ class Hotels(Resource):
             'name' : line[1],
             'star' : line[2],
             'daily' : line[3],
-            'city' : line[4]
+            'city' : line[4],
+            'site_id' : line[5]
             })
         
         connection.close
@@ -81,6 +56,7 @@ class Hotel(Resource):
     args.add_argument('star', type=float, required=True, help="The field 'star' cannot be left blank"),
     args.add_argument('daily', type=float, required=True, help="The field 'daily' cannot be left blank"),
     args.add_argument('city', type=str, required=True, help="The field 'city' cannot be left blank")
+    args.add_argument('site_id', type=int, required=True, help="Every hotel needs to be linked with a site")
 
 
     def get(self, hotel_id):   
@@ -93,10 +69,13 @@ class Hotel(Resource):
     @jwt_required()
     def post(self, hotel_id):
         if HotelModel.find_hotel(hotel_id):
-            return {"message" : "Hotel id'{}'already exists.".format(hotel_id)}, 400 #bad
+            return {"message" : "Hotel id'{}'already exists.".format(hotel_id)}, 400
         
         data = Hotel.args.parse_args()
         hotel_object = HotelModel(hotel_id, **data)
+        
+        if not SiteModel.find_by_id(data['site_id']):
+            return {'message' : 'The hotel must be associated to a valid site id'}, 400
         try:
             hotel_object.save_hotel()
         except:

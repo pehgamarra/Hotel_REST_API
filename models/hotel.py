@@ -8,13 +8,16 @@ class HotelModel(databank.Model):
     star = databank.Column(databank.Float(precision=1))
     daily = databank.Column(databank.Float(precision=2))
     city = databank.Column(databank.String(40))
+    site_id = databank.Column(databank.Integer, databank.ForeignKey('sites.site_id'))
 
-    def __init__(self, hotel_id, name, star, daily, city):
+
+    def __init__(self, hotel_id, name, star, daily, city, site_id):
         self.hotel_id = hotel_id
         self.name = name
         self.star = star
         self.daily = daily
         self.city = city   
+        self.site_id = site_id
 
 
     def json(self):
@@ -23,12 +26,13 @@ class HotelModel(databank.Model):
             'name' : self.name,
             'star' : self.star,
             'daily' : self.daily,
-            'city' : self.city
+            'city' : self.city,
+            'site_id' : self.site_id
         }
 
     @classmethod
     def find_hotel(cls, hotel_id):
-        hotel = cls.query.filter_by(hotel_id=hotel_id).first() # = SELECT * FROM hotels WHERE hotel_id = $hotel_id limit_1
+        hotel = cls.query.filter_by(hotel_id=hotel_id).first() 
         if hotel:
             return hotel   
         return None
