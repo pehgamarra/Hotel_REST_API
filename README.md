@@ -13,7 +13,7 @@ The class hotel is compost of:
   hotel_id (primary key), name, star, daily, city and site_id 
   
 The user is compost of:
-  user_id (primary key), login and password
+  user_id (primary key), login, email and password
   
 The site is compost of:
   site_id (primary key), url and the hotels (relationship with class hotel)
@@ -22,8 +22,10 @@ The site is compost of:
 The user generates a JWT token to enable posting, updating, and deleting operations on the sites and hotels.
 
 So you need do login, take the token and put it on the Headers > Authorization{key} / Bearer(token) {value} when you will post, put or del !
-(the gets dont need a login to search *(you dont need be registrated in the site to see the hotels and they details))*
+(the gets dont need a login to search *(you dont need be registrated in the site to see the hotels and they details))* and dont forget confirmation your email using a get in /confirmation/{user_id}
 
+I implemented the code for email authentication, but it was not possible to finish due to the lack of a private API key.
+I tried various ways and failed to obtain one; I believe it might only be possible by paying for a server.
 
 The main url is : http://127.0.0.1:5000/ (followed by what u need to access):
 (Hotels, '/hotels')
@@ -34,3 +36,4 @@ The main url is : http://127.0.0.1:5000/ (followed by what u need to access):
 (UserLogout, '/logout')
 (Sites, '/sites')
 (Site, '/sites/<string:url>')
+(UserConfirm, '/confirmation/<int:user_id>')
