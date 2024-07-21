@@ -1,3 +1,4 @@
+from flask import request
 from flask_restful import Resource, reqparse
 from blacklist import BLACKLIST
 from models.user import UserModel
@@ -9,6 +10,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 args = reqparse.RequestParser()
 args.add_argument ('login', type=str, required=True, help="The field 'login' cannot be left blank"),
 args.add_argument ('password', type=str, required=True, help="The field 'password' cannot be left blank")
+args.add_argument ('actived', type=bool)
 
 class User(Resource):
     #/user/{user_id}
@@ -41,7 +43,8 @@ class UserRegister(Resource):
         if UserModel.find_by_login(data['login']):
             return {'message': "The login '{}' already existis.".format(data['login'])}
         
-        user = UserModel(login=data['login'], password=data['password'])
+        user = UserModel(login=data['login'], password=data['password'],actived=data)
+        user.actived = False
         user.save_user()
         return {'message': 'User created successfully!'},201
 
@@ -55,8 +58,10 @@ class UserLogin(Resource):
         user = UserModel.find_by_login(data['login'])
 
         if user and compare_digest(user.password, data['password']):
-            access_token = create_access_token(identity=user.user_id)
-            return {'access_token':access_token}, 200
+            if user.actived:
+                access_token = create_access_token(identity=user.user_id)
+                return {'access_token':access_token}, 200
+            return{'message' : 'User not confirmed.'},400
         return {'message' : 'The username or password is incorret.'}, 401
 
 
@@ -68,3 +73,17 @@ class UserLogout(Resource):
        jwt_id = get_jwt()['jti'] #JWT Token Identifier
        BLACKLIST.add(jwt_id)
        return {'message' : 'Logged out successfully!'},200
+   
+
+class UserConfirm(Resource):
+    #confirm/{user_id}
+    @classmethod
+    def get(cls, user_id):
+        user = UserModel.find_user(user_id)
+
+        if not user:
+           return {"message" : "User id '{}' not found.".format(user_id)},404
+        
+        user.actived = True
+        user.save_user()
+        return {'message': "User id '{}' confirmed successfully!".format(user_id)},200

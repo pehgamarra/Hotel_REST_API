@@ -1,4 +1,5 @@
 from sql_alchemy import databank
+from flask_jwt_extended import jwt_required
 
 class SiteModel(databank.Model):
     __tablename__ = 'sites'
@@ -34,10 +35,13 @@ class SiteModel(databank.Model):
         return None
     
 
+    @jwt_required()
     def save_site(self):
         databank.session.add(self)
         databank.session.commit()
-    
+
+
+    @jwt_required()
     def delete_site (self):
         [hotels.delete_hotel() for hotels in self.hotels]
         databank.session.delete(self)

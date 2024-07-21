@@ -6,17 +6,19 @@ class UserModel(databank.Model):
     user_id = databank.Column(databank.Integer, primary_key = True)
     login = databank.Column(databank.String(40))
     password = databank.Column(databank.String(40))
+    actived = databank.Column(databank.Boolean, default=False)
 
-
-    def __init__(self, login, password):
+    def __init__(self, login, password, actived):
         self.login = login
         self.password = password
+        self.actived = actived
 
 
     def json(self):
         return {
             'user_id' : self.user_id,
-            'login' : self.login
+            'login' : self.login,
+            'actived' : self.actived
         }
 
 
