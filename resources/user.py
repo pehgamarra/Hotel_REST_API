@@ -1,15 +1,16 @@
-from flask import request
+from flask import make_response, render_template, request
 from flask_restful import Resource, reqparse
 from blacklist import BLACKLIST
 from models.user import UserModel
 from secrets import compare_digest
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
-
+import traceback
 
 
 args = reqparse.RequestParser()
-args.add_argument ('login', type=str, required=True, help="The field 'login' cannot be left blank"),
+args.add_argument ('login', type=str, required=True, help="The field 'login' cannot be left blank")
 args.add_argument ('password', type=str, required=True, help="The field 'password' cannot be left blank")
+args.add_argument ('email', type=str)
 args.add_argument ('actived', type=bool)
 
 class User(Resource):
@@ -39,13 +40,24 @@ class UserRegister(Resource):
     
     def post(self):
         data = args.parse_args()
+        if not data.get('email') or data.get('email') is None:
+            return {"message" : "The field 'email' cannto be left blank"},400
+        
+        if UserModel.find_by_email(data['email']):
+            return {"message" : "The email '{}' already existis".format(data['email'])},400
 
         if UserModel.find_by_login(data['login']):
             return {'message': "The login '{}' already existis.".format(data['login'])}
         
-        user = UserModel(login=data['login'], password=data['password'],actived=data)
+        user = UserModel(**data)
         user.actived = False
-        user.save_user()
+        try:
+            user.save_user()
+            user.send_confirmation_email()
+        except:
+            user.delete_user()
+            traceback.print_exc()
+            return {"message": "An internal server erro has ocorred"},500
         return {'message': 'User created successfully!'},201
 
 class UserLogin(Resource):
@@ -86,4 +98,6 @@ class UserConfirm(Resource):
         
         user.actived = True
         user.save_user()
-        return {'message': "User id '{}' confirmed successfully!".format(user_id)},200
+        #return {'message': "User id '{}' confirmed successfully!".format(user_id)},200
+        headers = {'Content-tyoe' :'text/html'}
+        return make_response(render_template('user_confirm.html', email=user.email, user=user.login)),200

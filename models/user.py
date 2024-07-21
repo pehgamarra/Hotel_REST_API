@@ -1,12 +1,12 @@
 from flask import request, url_for
-from sql_alchemy import databank
 from requests import post
+from sql_alchemy import databank
 
 
 MAILGUN_DOMAIN = 'sandboxb0d3e02541804e9c8a0e54f8298fba35.mailgun.org'
-MAILGUN_API_KEY = 'pubkey-a7cd52f294cde579807b719dc3db28e6'
-FROM_TITLE ='no-replay'
-FROM_EMAIL ='no-replay@restapi.com'
+MAILGUN_API_KEY = 'c8068c3ac868c5ea43682f95ebcd83a3'
+FROM_TITLE ='NO-REPLAY'
+FROM_EMAIL ='pedrohhouro@gmail.com'
 
 
 class UserModel(databank.Model):
@@ -24,21 +24,11 @@ class UserModel(databank.Model):
         self.email = email
         self.actived = actived
 
-
-    def json(self):
-        return {
-            'user_id' : self.user_id,
-            'login' : self.login,
-            'email' : self.email,
-            'actived' : self.actived
-        }
-
-
+    
     def send_confirmation_email(self):
-
         link = request.url_root[:-1] + url_for('userconfirm', user_id=self.user_id)
         return post('https://api.mailgun.net/v3/{}/messages'.format(MAILGUN_DOMAIN),
-                    auth= ('api', MAILGUN_API_KEY),
+                    auth= ('api',MAILGUN_API_KEY),
                     data= {'from': '{} <{}>'.format(FROM_TITLE, FROM_EMAIL),
                           'to' : self.email,
                           'subject' : 'Register Confirmation',
@@ -48,8 +38,17 @@ class UserModel(databank.Model):
                            </p></html>'.format(link)
                            }
                     )
-                
+    
+    
+    def json(self):
+        return {
+            'user_id' : self.user_id,
+            'login' : self.login,
+            'email' : self.email,
+            'actived' : self.actived
+        }
 
+                
     @classmethod
     def find_user(cls, user_id):
         user = cls.query.filter_by(user_id=user_id).first()
@@ -64,6 +63,12 @@ class UserModel(databank.Model):
             return user   
         return None
     
+    @classmethod
+    def find_by_email(cls, email):
+        user = cls.query.filter_by(email = email).first()
+        if user:
+            return user   
+        return None
 
     def save_user(self):
         databank.session.add(self)
