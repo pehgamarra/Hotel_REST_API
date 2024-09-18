@@ -29,7 +29,7 @@ class User(Resource):
         if user:
             try:
                 user.delete_user()
-            except:
+            except Exception:
                 return {'message' : 'An error ocurred trying to delete User.'},500    
             return {'message' : 'User deleted.'},200
         return {'message' : 'User not found.'},404
@@ -54,7 +54,7 @@ class UserRegister(Resource):
         try:
             user.save_user()
             user.send_confirmation_email()
-        except:
+        except Exception:
             user.delete_user()
             traceback.print_exc()
             return {"message": "An internal server erro has ocorred"},500

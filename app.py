@@ -44,6 +44,6 @@ api.add_resource(UserConfirm, '/confirmation/<int:user_id>')
 if __name__ == '__main__':
     from sql_alchemy import databank
     databank.init_app(app)
-    app.run(debug=True)
+    app.run(debug=False)
 
 # run into http://127.0.0.1:5000/ on postman

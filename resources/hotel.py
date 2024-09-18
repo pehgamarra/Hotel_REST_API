@@ -78,7 +78,7 @@ class Hotel(Resource):
             return {'message' : 'The hotel must be associated to a valid site id'}, 400
         try:
             hotel_object.save_hotel()
-        except:
+        except Exception:
             return {'message' : 'An internal error ocurred trying to save hotel.'}, 500
         return hotel_object.json()
 
@@ -95,7 +95,7 @@ class Hotel(Resource):
         hotel_object = HotelModel(hotel_id, **data)
         try:
             hotel_object.save_hotel()
-        except:
+        except Exception:
             return {'message' : 'An internal error ocurred trying to save hotel.'}, 500
         return hotel_object.json(), 201
     
@@ -106,7 +106,7 @@ class Hotel(Resource):
         if hotel:
             try:
                 hotel.delete_hotel()
-            except:
+        except Exception:
                 return {'message' : 'An error ocurred trying to delete hotel.'},500    
             return {'message' : 'Hotel deleted.'},200
         return {'message' : 'Hotel not found.'},404

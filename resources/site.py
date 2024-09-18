@@ -27,7 +27,7 @@ class Site(Resource):
 
         try:
             site.save_site()
-        except:
+        except Exception:
             return {'message' : 'An internal error ocurred trying to create a new site.'}
         return site.json()
 
